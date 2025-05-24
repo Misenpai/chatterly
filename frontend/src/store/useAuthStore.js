@@ -33,7 +33,11 @@ export const useAuthStore = create((set, get) => ({
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
+      set({ authUser: res.data.user });
+
+      sessionStorage.setItem("access_token", res.data.accessToken);
+      sessionStorage.setItem("refresh_token", res.data.refreshToken);
+
       toast.success("Account created successfully");
       get().connectSocket();
     } catch (error) {
@@ -91,6 +95,8 @@ export const useAuthStore = create((set, get) => ({
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
 
+    console.log("Connecting socket with userId:", authUser._id); // Debug log
+
     const socket = io(BASE_URL, {
       query: {
         userId: authUser._id,
@@ -100,7 +106,16 @@ export const useAuthStore = create((set, get) => ({
 
     set({ socket: socket });
 
+    socket.on("connect", () => {
+      console.log(`Socket connected with ID: ${socket.id}`);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Socket disconnected");
+    });
+
     socket.on("getOnlineUsers", (userIds) => {
+      console.log("Online users received:", userIds); // Log online users
       set({ onlineUsers: userIds });
     });
   },

@@ -23,7 +23,13 @@ const App = () => {
   useEffect(() => {
     const refreshToken = sessionStorage.getItem('refresh_token');
     if (refreshToken) {
-      checkAuth();
+      (async () => {
+        try {
+          await checkAuth();
+        } catch (error) {
+          console.error("Error during checkAuth in App.jsx:", error);
+        }
+      })();
     } else {
       useAuthStore.setState({ isCheckingAuth: false });
     }
